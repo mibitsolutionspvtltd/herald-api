@@ -17,7 +17,8 @@
     "logs:error": "tail -f logs/error.log",
     "logs:pm2": "pm2 logs student-herald-api",
     "health": "curl http://localhost:3001/api/health",
-    "prepare-deploy": "node prepare-deploy.js"
+    "prepare-deploy": "node prepare-deploy.js",
+    "verify": "node verify-setup.js"
   },
   "dependencies": {
     "aws-sdk": "^2.1457.0",
