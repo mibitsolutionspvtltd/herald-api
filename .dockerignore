@@ -8,8 +8,8 @@ logs
 *.log
 .git
 .gitignore
-README.md
 *.md
+!README.md
 test-*.js
 .vscode
 .idea
