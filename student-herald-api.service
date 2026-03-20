@@ -1,0 +1,20 @@
+[Unit]
+Description=Student Herald API Server
+Documentation=https://github.com/your-org/student-herald
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/student-herald/api
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/student-herald/api/.env.production
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=student-herald-api
+
+[Install]
+WantedBy=multi-user.target
