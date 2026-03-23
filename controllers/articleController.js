@@ -223,7 +223,6 @@ exports.getArticleById = async (req, res, next) => {
 // Create new article
 exports.createArticle = async (req, res, next) => {
   const transaction = await Article.sequelize.transaction();
-  let transactionCommitted = false;
 
   try {
     const {
@@ -419,11 +418,9 @@ exports.createArticle = async (req, res, next) => {
 
     // Commit transaction
     await transaction.commit();
-    transactionCommitted = true;
 
     // Fetch the complete article with all associations
-    // Note: Tags excluded from include because article_tag.tag is a string, not a foreign key
-    const { Operator } = require('../models');
+    const { Operator, Tag } = require('../models');
     const createdArticle = await Article.findByPk(article.id, {
       include: [
         { model: Category, as: 'category', attributes: ['id', 'name'] },
@@ -435,6 +432,12 @@ exports.createArticle = async (req, res, next) => {
           as: 'authors',
           attributes: ['id', 'first_name', 'last_name', 'email'],
           through: { attributes: ['author_order'] }
+        },
+        {
+          model: Tag,
+          as: 'tags',
+          attributes: ['id', 'name', 'slug'],
+          through: { attributes: [] }
         },
         {
           model: Article,
@@ -453,10 +456,7 @@ exports.createArticle = async (req, res, next) => {
     });
 
   } catch (error) {
-    // Only rollback if transaction wasn't already committed
-    if (transaction && !transactionCommitted) {
-      await transaction.rollback();
-    }
+    await transaction.rollback();
     console.error('Create article error:', error);
     next(error);
   }
