@@ -339,18 +339,38 @@ exports.createArticle = async (req, res, next) => {
       await ArticleAuthor.bulkCreate(authorRecords, { transaction });
     }
 
-    // Add tags - article_tag table uses tag_id foreign key
+    // Add tags - article_tag table stores tag names as strings, not IDs
+    // Note: article_tag.id is NOT auto-increment, so we need to generate IDs manually
     if (parsedTagIds && parsedTagIds.length > 0) {
-      const { ArticleTag } = require('../models');
+      const { ArticleTag, Tag } = require('../models');
       
-      const tagRecords = parsedTagIds.map(tagId => ({
-        article_id: article.id,
-        tag_id: parseInt(tagId),
-        created_on: new Date(),
-        last_updated_on: new Date(),
-      }));
-      
-      await ArticleTag.bulkCreate(tagRecords, { transaction });
+      // Get tag names from tag IDs
+      const tags = await Tag.findAll({
+        where: { id: parsedTagIds.map(id => parseInt(id)) },
+        attributes: ['id', 'name'],
+        transaction
+      });
+
+      if (tags.length > 0) {
+        // Get the max ID from article_tag to generate new IDs
+        const [maxIdResult] = await sequelize.query(
+          'SELECT COALESCE(MAX(id), 0) as maxId FROM article_tag',
+          { transaction }
+        );
+        let nextId = maxIdResult[0].maxId + 1;
+
+        // Create article_tag records with tag names and manual IDs
+        const tagRecords = tags.map((tag, index) => ({
+          id: nextId++, // Manually assign ID since column is not auto-increment
+          article_id: article.id,
+          tag: tag.name, // Store tag name as string
+          tag_score: index + 1, // Use order as score
+          created_on: new Date(),
+          last_updated_on: new Date(),
+        }));
+        
+        await ArticleTag.bulkCreate(tagRecords, { transaction });
+      }
     }
 
     // Add related posts (many-to-many)
