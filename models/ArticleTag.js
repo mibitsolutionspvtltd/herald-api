@@ -15,14 +15,14 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id',
         },
       },
-      tag: {
-        type: DataTypes.STRING(255),
+      tag_id: {
+        type: DataTypes.INTEGER,
         allowNull: true,
-        comment: 'Tag name stored as string (not a foreign key)'
-      },
-      tag_score: {
-        type: DataTypes.FLOAT,
-        allowNull: true,
+        references: {
+          model: 'tags',
+          key: 'id',
+        },
+        comment: 'Foreign key to tags table'
       },
       created_on: {
         type: DataTypes.DATE(6),
